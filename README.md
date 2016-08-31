@@ -1,7 +1,8 @@
 Simple Homestart
 ----------------
 
-This mod adds simple player specific and global start location 
+This mod adds  a block that will allow the silent setting of a respawn point.
+It also provides simple player specific and global start location services.
 
 Commands
 --------
