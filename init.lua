@@ -99,7 +99,15 @@ minetest.register_chatcommand("sethome", {
     end,
 })
 
-
+minetest.register_on_newplayer(function(player)
+   
+    if minetest.get_modpath("startlocation") == nil then   
+        local loc = homestart.readhome(homestart.getallstart())
+        if loc ~= nil then
+            player:setpos(loc) 
+        end
+    end
+end)
  
 minetest.register_on_respawnplayer(function(player)
 
@@ -157,7 +165,6 @@ minetest.register_abm({
         if pos ~= nil then
                    
             for _,player in ipairs(minetest.get_connected_players()) do
-
 
                     local ppos = player:getpos()
 
