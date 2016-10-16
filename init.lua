@@ -50,6 +50,42 @@ homestart.savehome = function(pos,filename)
 	io.close(output)
 end
 
+homestart.gohome = function (player)
+
+    local name = player:get_player_name()
+    if name == nil then 
+        return nil
+    end
+
+    -- Try our set home
+    local sloc = homestart.readhome(homestart.getplayerstart(name))
+    if sloc ~= nil then
+        player:setpos(sloc)
+        return sloc            
+    end
+ 
+    -- Support unified Inventory home mod
+    if minetest.get_modpath("unified_inventory") ~= nil then
+        if unified_inventory.home_pos[name] ~= nil then            
+            local pos = unified_inventory.home_pos[name]
+	        if pos then
+		        player:setpos(pos)
+                return pos
+	        end
+        end
+    end
+
+    -- If startlocation mod isn't there, then use global loc
+    if minetest.get_modpath("startlocation") == nil then   
+        local loc = homestart.readhome(homestart.getallstart())
+        if loc ~= nil then
+            player:setpos(loc)
+            return loc 
+        end
+    end
+    return nil
+end
+
 minetest.register_chatcommand("startloc", {
 	params = "",
 	privs = {startlocation=true},
@@ -76,14 +112,17 @@ minetest.register_chatcommand("home", {
             -- just a check to prevent the server crashing
             return false
         end
-        local sloc = homestart.readhome(homestart.getplayerstart(name))
-        if sloc ~= nil then
-            minetest.chat_send_player(name, "Teleported to home!")
-            player:setpos(sloc)  
+        local sloc = homestart.gohome(player)
+        if sloc ~= nil then        
+            minetest.sound_play("teleport", {
+	        to_player = name,
+	        gain = 2.0,
+            })
+            minetest.chat_send_player(name, "Teleported to home!")          
         else
             minetest.chat_send_player(name, "Set a home using /sethome")      
         end
- 
+        homestart.gohome(player)
     end,
 })
 
@@ -111,35 +150,14 @@ end)
  
 minetest.register_on_respawnplayer(function(player)
 
-    local name = player:get_player_name()
-    if name == nil then 
-        return
-    end
-
-    -- Try our set home
-    local sloc = homestart.readhome(homestart.getplayerstart(name))
-    if sloc ~= nil then
-        player:setpos(sloc)            
-    end
- 
-    -- Support unified Inventory home mod
-    if minetest.get_modpath("unified_inventory") ~= nil then
-        if unified_inventory.home_pos[name] ~= nil then
-            unified_inventory.go_home(player)
-            return
-        end
-    end
-
-   
-    -- If startlocation mod isn't there, then use global loc
-    if minetest.get_modpath("startlocation") == nil then   
-        local loc = homestart.readhome(homestart.getallstart())
-        if loc ~= nil then
-            player:setpos(loc) 
-        end
-    end
+   homestart.gohome(player)
  
 end)
+
+-- Override Unified Inventory API
+function unified_inventory.go_home(player)
+	homestart.gohome(player)
+end
 
 -- Register homeblock - pass near it and home will be set silently
 
